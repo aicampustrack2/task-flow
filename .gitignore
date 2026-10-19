@@ -1,0 +1,7 @@
+#프로젝트 맨 위 폴더에 .gitignore 를 만드세요. 아래 줄을 넣으세요.
+frontend/node_modules/
+frontend/dist/
+backend/.venv/
+.env
+*.db
+__pycache__/
