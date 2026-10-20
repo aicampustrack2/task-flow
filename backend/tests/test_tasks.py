@@ -6,8 +6,8 @@ from pathlib import Path
 from fastapi import HTTPException
 
 from app.db import init_db
-from app.schemas import TaskCreate
-from app.tasks import create_task, list_tasks
+from app.schemas import StatusChange, TaskCreate, TaskUpdate
+from app.tasks import change_status, create_task, delete_task, list_tasks, update_task
 
 
 class TasksApiTest(unittest.TestCase):
@@ -45,6 +45,62 @@ class TasksApiTest(unittest.TestCase):
                     create_task(TaskCreate(title=bad))
                 self.assertEqual(cm.exception.status_code, 422)
         self.assertEqual(list_tasks(), [])
+
+
+class TaskChangeTest(TasksApiTest):
+    def _code(self, fn, *args):
+        with self.assertRaises(HTTPException) as cm:
+            fn(*args)
+        return cm.exception.status_code
+
+    def test_every_status_transition(self):
+        states = ["TODO", "IN_PROGRESS", "DONE"]
+        for src in states:
+            for dst in states:
+                with self.subTest(src=src, dst=dst):
+                    t = create_task(TaskCreate(title="x"))
+                    change_status(t.id, StatusChange(status=src))
+                    self.assertEqual(change_status(t.id, StatusChange(status=dst)).status, dst)
+                    self.assertEqual(
+                        [x.status for x in list_tasks() if x.id == t.id], [dst]
+                    )
+
+    def test_invalid_status_rejected_and_unchanged(self):
+        t = create_task(TaskCreate(title="x"))
+        for bad in [None, "", "done", "DOING"]:
+            with self.subTest(bad=bad):
+                self.assertEqual(self._code(change_status, t.id, StatusChange(status=bad)), 422)
+        self.assertEqual(list_tasks()[0].status, "TODO")
+
+    def test_update_title_and_description_keeps_status(self):
+        t = create_task(TaskCreate(title="a", description="d"))
+        change_status(t.id, StatusChange(status="DONE"))
+        u = update_task(t.id, TaskUpdate(title=" b ", description="e"))
+        self.assertEqual((u.title, u.description, u.status), ("b", "e", "DONE"))
+
+    def test_update_only_sent_fields(self):
+        t = create_task(TaskCreate(title="a", description="d"))
+        self.assertEqual(update_task(t.id, TaskUpdate(description="e")).title, "a")
+        self.assertEqual(update_task(t.id, TaskUpdate(title="b")).description, "e")
+
+    def test_update_blank_title_rejected_and_unchanged(self):
+        t = create_task(TaskCreate(title="a", description="d"))
+        for bad in [None, "", "  "]:
+            with self.subTest(bad=bad):
+                self.assertEqual(self._code(update_task, t.id, TaskUpdate(title=bad)), 422)
+        self.assertEqual((list_tasks()[0].title, list_tasks()[0].description), ("a", "d"))
+
+    def test_missing_card_rejected(self):
+        self.assertEqual(self._code(update_task, 999, TaskUpdate(title="x")), 404)
+        self.assertEqual(self._code(change_status, 999, StatusChange(status="DONE")), 404)
+        self.assertEqual(self._code(delete_task, 999), 404)
+
+    def test_delete_removes_card(self):
+        a = create_task(TaskCreate(title="a"))
+        b = create_task(TaskCreate(title="b"))
+        delete_task(a.id)
+        self.assertEqual([t.id for t in list_tasks()], [b.id])
+        self.assertEqual(self._code(delete_task, a.id), 404)
 
 
 if __name__ == "__main__":
