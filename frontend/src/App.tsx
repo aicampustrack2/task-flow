@@ -21,13 +21,13 @@ function App() {
   }
 
   async function handleChangeStatus(id: number, status: Status) {
-    withTasks((tasks) => tasks.map((t) => (t.id === id ? saved : t)))
+    withTasks((tasks) => tasks.map((t) => (t.id === id ? { ...t, status } : t)))
     await changeStatus(id, status)
   }
 
   async function handleUpdate(id: number, input: { title: string; description: string }) {
     const saved = await updateTask(id, input)
-    withTasks((tasks) => tasks.map((t) => (t.id === id ? { ...t, status } : t)))
+    withTasks((tasks) => tasks.map((t) => (t.id === id ? saved : t)))
   }
 
   async function handleDelete(id: number) {
