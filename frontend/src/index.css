@@ -65,6 +65,21 @@ main {
   align-self: flex-start;
 }
 
+.card input,
+.card textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  margin-bottom: 0.4rem;
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
 [role='alert'] {
   color: #b91c1c;
 }
