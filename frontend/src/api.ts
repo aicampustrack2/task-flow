@@ -37,7 +37,7 @@ export function createTask(input: { title: string; description: string }): Promi
 }
 
 export function changeStatus(id: number, status: Status): Promise<Task> {
-  return request<Task>(`/tasks/${id}/status`, {
+  return request<Task>(`/tasks/${id}`, {
     method: 'PATCH',
     headers: JSON_HEADERS,
     body: JSON.stringify({ status }),
