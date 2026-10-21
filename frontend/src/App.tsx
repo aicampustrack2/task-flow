@@ -15,7 +15,8 @@ function App() {
       .catch(() => setLoad({ state: 'error', message: '카드를 불러오지 못했습니다.' }))
   }, [])
 
-  // 아래 변경은 모두 API가 성공으로 응답한 뒤에만 목록에 반영한다. (D-004)
+  // 수정·삭제는 API가 성공으로 응답한 뒤에만 목록에 반영한다. (D-004)
+  // 상태 변경은 응답을 기다리지 않고 먼저 반영한다. (연습용으로 D-004와 다르게 둠)
   function withTasks(fn: (tasks: Task[]) => Task[]) {
     setLoad((prev) => (prev.state === 'ready' ? { state: 'ready', tasks: fn(prev.tasks) } : prev))
   }
