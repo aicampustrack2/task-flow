@@ -26,3 +26,15 @@ class Task(BaseModel):
     title: str
     description: str
     status: Status
+
+
+class Credentials(BaseModel):
+    # 값 검사는 rules.py 한 곳에서 한다. 여기서는 받기만 한다.
+    username: Any = None
+    password: Any = None
+
+
+class User(BaseModel):
+    # 응답에는 비밀번호와 해시를 담지 않는다.
+    id: int
+    username: str

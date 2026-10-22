@@ -1,3 +1,4 @@
+import re
 from enum import StrEnum
 
 
@@ -33,3 +34,29 @@ def validate_status(status: object) -> Status:
         return Status(status)
     except ValueError:
         raise RuleError("상태는 TODO, IN_PROGRESS, DONE 중 하나여야 합니다.") from None
+
+
+# 계정 규칙. 값 검사는 여기 한 곳에서 한다. (D-006)
+_EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+MIN_PASSWORD_LENGTH = 8
+MAX_PASSWORD_LENGTH = 128  # 너무 긴 입력으로 해시 계산이 오래 걸리는 것을 막는다.
+
+
+def validate_username(username: object) -> str:
+    # 아이디는 이메일 형식이다. 앞뒤 공백을 지우고 소문자로 맞춰 저장한다.
+    if not isinstance(username, str):
+        raise RuleError("아이디는 이메일 형식이어야 합니다.")
+    value = username.strip().lower()
+    if len(value) > 254 or not _EMAIL.match(value):
+        raise RuleError("아이디는 이메일 형식이어야 합니다.")
+    return value
+
+
+def validate_password(password: object) -> str:
+    if not isinstance(password, str) or not (
+        MIN_PASSWORD_LENGTH <= len(password) <= MAX_PASSWORD_LENGTH
+    ):
+        raise RuleError(
+            f"비밀번호는 {MIN_PASSWORD_LENGTH}자 이상 {MAX_PASSWORD_LENGTH}자 이하여야 합니다."
+        )
+    return password
