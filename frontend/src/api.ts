@@ -1,4 +1,19 @@
-import type { Status, Task } from './types'
+import type { Status, Task, User } from './types'
+
+// 상태 코드를 담은 오류. 401(로그인 안 됨)을 연결 실패 등과 구분하는 데 쓴다.
+export class ApiError extends Error {
+  status: number
+  constructor(message: string, status: number) {
+    super(message)
+    this.status = status
+  }
+}
+
+// Task API가 401을 돌려주면(로그인 만료 등) 호출된다. App이 로그인 화면으로 돌리는 데 쓴다.
+let onUnauthorized: (() => void) | null = null
+export function setUnauthorizedHandler(handler: (() => void) | null) {
+  onUnauthorized = handler
+}
 
 // /api 는 Vite 프록시가 로컬 API 서버로 넘긴다.
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -16,13 +31,39 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     } catch {
       // 본문이 없으면 기본 문구를 쓴다.
     }
-    throw new Error(message)
+    // /auth/* 의 401은 호출한 쪽이 직접 다룬다. (로그인 실패와 로그인 만료를 섞지 않는다.)
+    if (res.status === 401 && !path.startsWith('/auth/')) onUnauthorized?.()
+    throw new ApiError(message, res.status)
   }
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
+
+export function getMe(): Promise<User> {
+  return request<User>('/auth/me')
+}
+
+export function login(input: { username: string; password: string }): Promise<User> {
+  return request<User>('/auth/login', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify(input),
+  })
+}
+
+export function signup(input: { username: string; password: string }): Promise<User> {
+  return request<User>('/auth/signup', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify(input),
+  })
+}
+
+export function logout(): Promise<void> {
+  return request<void>('/auth/logout', { method: 'POST' })
+}
 
 export function listTasks(): Promise<Task[]> {
   return request<Task[]>('/tasks')

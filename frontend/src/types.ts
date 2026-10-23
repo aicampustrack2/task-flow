@@ -7,6 +7,11 @@ export interface Task {
   status: Status
 }
 
+export interface User {
+  id: number
+  username: string
+}
+
 // 열 순서와 화면 표시. 저장값은 DATA-MODEL.md 기준.
 export const COLUMNS: { status: Status; label: string }[] = [
   { status: 'TODO', label: '할 일' },
