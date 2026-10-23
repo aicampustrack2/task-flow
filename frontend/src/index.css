@@ -80,6 +80,50 @@ main {
   margin-top: 0.5rem;
 }
 
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.user-box {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 320px;
+}
+
+.auth-form h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.auth-form input {
+  font: inherit;
+  padding: 0.4rem 0.5rem;
+}
+
+.auth-form button[type='submit'] {
+  align-self: flex-start;
+}
+
+.auth-form .link {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  color: #2563eb;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 [role='alert'] {
   color: #b91c1c;
 }
