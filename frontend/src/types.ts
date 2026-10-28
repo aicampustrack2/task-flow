@@ -22,6 +22,13 @@ export interface TaskInput {
   due_date: string | null
 }
 
+// AI 제안. 저장된 값이 아니라 입력란에 채울 값이다. due_date 가 null 이면 마감일 없음.
+export interface Suggestion {
+  priority: Priority
+  due_date: string | null
+  reason: string
+}
+
 export interface User {
   id: number
   username: string

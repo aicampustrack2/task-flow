@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { COLUMNS, PRIORITIES, type Priority, type Status, type Task, type TaskInput } from '../types'
+import { useSuggest } from '../useSuggest'
+import { SuggestButton, SuggestNote } from './AiSuggest'
 
 interface Props {
   task: Task
@@ -16,6 +18,14 @@ export default function TaskCard({ task, onChangeStatus, onUpdate, onDelete }: P
   const [dueDate, setDueDate] = useState(task.due_date ?? '')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  // AI 제안은 입력란만 채운다. 저장은 아래 저장 버튼이 한다.
+  const suggest = useSuggest(
+    () => ({ title, description }),
+    (s) => {
+      setPriority(s.priority)
+      setDueDate(s.due_date ?? '')
+    },
+  )
 
   // 저장이 끝난 응답을 받은 뒤에만 화면이 바뀐다. 실패하면 그대로 두고 알린다. (D-004)
   async function run(action: () => Promise<void>): Promise<boolean> {
@@ -38,6 +48,7 @@ export default function TaskCard({ task, onChangeStatus, onUpdate, onDelete }: P
     setPriority(task.priority)
     setDueDate(task.due_date ?? '')
     setError(null)
+    suggest.reset()
     setEditing(true)
   }
 
@@ -49,7 +60,15 @@ export default function TaskCard({ task, onChangeStatus, onUpdate, onDelete }: P
     }
     // 마감일을 비우면 null 로 보내 마감일을 지운다.
     const input: TaskInput = { title, description, priority, due_date: dueDate || null }
-    if (await run(() => onUpdate(task.id, input))) setEditing(false)
+    if (await run(() => onUpdate(task.id, input))) {
+      suggest.reset()
+      setEditing(false)
+    }
+  }
+
+  function cancelEdit() {
+    suggest.reset()
+    setEditing(false)
   }
 
   async function remove() {
@@ -67,6 +86,7 @@ export default function TaskCard({ task, onChangeStatus, onUpdate, onDelete }: P
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
+        <SuggestButton suggest={suggest} />
         <div className="field-row">
           <label>
             우선순위{' '}
@@ -92,11 +112,12 @@ export default function TaskCard({ task, onChangeStatus, onUpdate, onDelete }: P
             />
           </label>
         </div>
+        <SuggestNote suggest={suggest} />
         <div className="card-actions">
           <button onClick={save} disabled={busy}>
             저장
           </button>
-          <button onClick={() => setEditing(false)} disabled={busy}>
+          <button onClick={cancelEdit} disabled={busy}>
             취소
           </button>
         </div>

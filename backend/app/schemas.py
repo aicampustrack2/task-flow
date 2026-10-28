@@ -37,6 +37,19 @@ class Task(BaseModel):
     is_overdue: bool
 
 
+class SuggestRequest(BaseModel):
+    # 값 검사는 rules.py 한 곳에서 한다. 여기서는 받기만 한다.
+    title: Any = None
+    description: Any = None
+
+
+class Suggestion(BaseModel):
+    # 제안만 돌려준다. 저장하지 않는다.
+    priority: Priority
+    due_date: str | None
+    reason: str
+
+
 class Credentials(BaseModel):
     # 값 검사는 rules.py 한 곳에서 한다. 여기서는 받기만 한다.
     username: Any = None

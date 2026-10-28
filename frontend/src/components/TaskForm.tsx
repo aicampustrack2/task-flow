@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react'
 import { createTask } from '../api'
 import { PRIORITIES, type Priority, type Task } from '../types'
+import { useSuggest } from '../useSuggest'
+import { SuggestButton, SuggestNote } from './AiSuggest'
 
 export default function TaskForm({ onCreated }: { onCreated: (task: Task) => void }) {
   const [title, setTitle] = useState('')
@@ -9,6 +11,14 @@ export default function TaskForm({ onCreated }: { onCreated: (task: Task) => voi
   const [dueDate, setDueDate] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  // AI 제안은 입력란만 채운다. 저장은 아래 등록 버튼이 한다.
+  const suggest = useSuggest(
+    () => ({ title, description }),
+    (s) => {
+      setPriority(s.priority)
+      setDueDate(s.due_date ?? '')
+    },
+  )
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -28,6 +38,7 @@ export default function TaskForm({ onCreated }: { onCreated: (task: Task) => voi
       setDescription('')
       setPriority('NORMAL')
       setDueDate('')
+      suggest.reset()
     } catch (err) {
       // 실패하면 입력한 내용을 그대로 둔다.
       setError(err instanceof Error ? err.message : '저장하지 못했습니다.')
@@ -50,6 +61,7 @@ export default function TaskForm({ onCreated }: { onCreated: (task: Task) => voi
         value={description}
         onChange={(e) => setDescription(e.target.value)}
       />
+      <SuggestButton suggest={suggest} />
       <div className="field-row">
         <label>
           우선순위{' '}
@@ -75,6 +87,7 @@ export default function TaskForm({ onCreated }: { onCreated: (task: Task) => voi
           />
         </label>
       </div>
+      <SuggestNote suggest={suggest} />
       <button type="submit" disabled={saving}>
         {saving ? '저장 중...' : '등록'}
       </button>
