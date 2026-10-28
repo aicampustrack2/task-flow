@@ -177,6 +177,18 @@ main {
   cursor: pointer;
 }
 
+.suggest-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.suggest-reason {
+  color: #4b5563;
+  margin: 0 0 0.4rem;
+}
+
 [role='alert'] {
   color: #b91c1c;
 }

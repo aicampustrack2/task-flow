@@ -24,6 +24,14 @@ def _read_env_file(path: Path) -> dict[str, str]:
     return values
 
 
+def get_anthropic_api_key(env_path: Path | None = None) -> str | None:
+    # 환경변수가 우선이고, 없으면 backend/.env 를 본다. 없어도 API는 시작하고, 제안 요청만 503 이다.
+    value = os.environ.get("ANTHROPIC_API_KEY") or _read_env_file(env_path or ENV_PATH).get(
+        "ANTHROPIC_API_KEY", ""
+    )
+    return value.strip() or None
+
+
 def get_session_secret(env_path: Path | None = None) -> str:
     # 환경변수가 우선이고, 없으면 backend/.env 를 본다. 비어 있으면 시작을 거부한다.
     value = os.environ.get("SESSION_SECRET") or _read_env_file(env_path or ENV_PATH).get(
