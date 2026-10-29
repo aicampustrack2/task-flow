@@ -29,6 +29,18 @@ export interface Suggestion {
   reason: string
 }
 
+// 오늘 브리핑. 보여 주기만 하고 저장하지 않는다. top3 는 먼저 할 일, later 는 미뤄도 되는 Task id.
+export interface BriefingPick {
+  id: number
+  reason: string
+}
+
+export interface Briefing {
+  top3: BriefingPick[]
+  later: number[]
+  cheer: string
+}
+
 export interface User {
   id: number
   username: string
