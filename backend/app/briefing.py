@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.ai_call import call_model
 from app.auth import current_user
 from app.db import connect
-from app.rules import Status, is_overdue, sort_key, today
+from app.rules import Status, is_overdue, read_priority, sort_key, today
 from app.schemas import Briefing, BriefingPick, User
 
 # 로그인한 사용자의 끝나지 않은(DONE 아닌) Task 로 오늘 브리핑을 만든다. 돌려주기만 하고 저장하지 않는다.
@@ -48,7 +48,7 @@ def _load_tasks(user_id: int) -> list[dict]:
         {
             "id": r["id"],
             "title": r["title"],
-            "priority": r["priority"],
+            "priority": read_priority(r["priority"]).value,
             "due_date": r["due_date"],
             "overdue": is_overdue(r["due_date"], r["status"], now),
         }
