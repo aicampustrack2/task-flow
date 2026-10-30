@@ -11,7 +11,7 @@ main {
 
 .board {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1rem;
 }
 
@@ -40,6 +40,10 @@ main {
   border: 1px solid #d1d5db;
   border-radius: 6px;
   padding: 0.5rem 0.75rem;
+}
+
+.card {
+  overflow-wrap: anywhere;
 }
 
 .card p {
@@ -135,6 +139,7 @@ main {
 
 .app-header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
@@ -191,4 +196,70 @@ main {
 
 [role='alert'] {
   color: #b91c1c;
+}
+
+.briefing {
+  margin-bottom: 1.5rem;
+}
+
+.briefing > p {
+  margin: 0.5rem 0 0;
+}
+
+.briefing-card {
+  max-width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+
+.briefing-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.briefing-card h2,
+.briefing-card h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.briefing-card h3 {
+  margin-top: 0.75rem;
+}
+
+.briefing-list {
+  margin: 0.4rem 0 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.briefing-list li + li {
+  margin-top: 0.25rem;
+}
+
+.briefing-cheer {
+  margin: 0.75rem 0 0;
+  color: #4b5563;
+}
+
+@media (max-width: 720px) {
+  main {
+    padding: 1rem 0.75rem;
+  }
+
+  .board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .auth-form {
+    max-width: none;
+  }
 }

@@ -7,6 +7,7 @@ from app.rules import (
     RuleError,
     Status,
     is_overdue,
+    read_priority,
     sort_key,
     today,
     validate_description,
@@ -29,7 +30,7 @@ def _to_task(row) -> Task:
         title=row["title"],
         description=row["description"],
         status=row["status"],
-        priority=row["priority"],
+        priority=read_priority(row["priority"]),
         due_date=row["due_date"],
         is_overdue=is_overdue(row["due_date"], row["status"], today()),
     )

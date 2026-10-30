@@ -51,6 +51,29 @@ def validate_priority(priority: object) -> Priority:
         raise RuleError("우선순위는 LOW, NORMAL, HIGH 중 하나여야 합니다.") from None
 
 
+def read_priority(stored: object) -> Priority:
+    # DB 에서 읽은 값 전용이다. 저장소는 값을 제한하지 않아(D-018) 허용 밖의 값이 들어 있을 수 있다.
+    # 그런 행 하나 때문에 목록 전체가 오류가 나지 않도록 보통으로 본다. 저장된 값은 고치지 않는다.
+    # 사용자가 보낸 값은 이 함수가 아니라 validate_priority 로 거부한다.
+    try:
+        return Priority(stored)
+    except ValueError:
+        return Priority.NORMAL
+
+
+COMMAND_MAX_LENGTH = 200
+
+
+def validate_command_text(text: object) -> str:
+    # "한 문장으로 시키기" 입력. 앞뒤 공백을 지운 뒤 1~200자여야 한다.
+    if not isinstance(text, str) or not text.strip():
+        raise RuleError("명령은 비워 둘 수 없습니다.")
+    value = text.strip()
+    if len(value) > COMMAND_MAX_LENGTH:
+        raise RuleError(f"명령은 {COMMAND_MAX_LENGTH}자 이하여야 합니다.")
+    return value
+
+
 _DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
 

@@ -29,6 +29,34 @@ export interface Suggestion {
   reason: string
 }
 
+// 오늘 브리핑. 보여 주기만 하고 저장하지 않는다. top3 는 먼저 할 일, later 는 미뤄도 되는 Task id.
+export interface BriefingPick {
+  id: number
+  reason: string
+}
+
+export interface Briefing {
+  top3: BriefingPick[]
+  later: number[]
+  cheer: string
+}
+
+// 한 문장으로 시키기. 서버가 돌려주는 제안이고 저장된 것이 아니다.
+// add 는 title · priority · due_date, due 는 id · due_date, done 은 id 만 쓰고 나머지는 null.
+export interface CommandAction {
+  kind: 'add' | 'due' | 'done'
+  id: number | null
+  title: string | null
+  priority: Priority | null
+  due_date: string | null
+}
+
+export interface CommandResult {
+  actions: CommandAction[]
+  // 쓸 수 있는 action 이 없을 때만 문장이다.
+  ask: string | null
+}
+
 export interface User {
   id: number
   username: string

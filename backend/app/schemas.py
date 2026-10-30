@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -48,6 +48,38 @@ class Suggestion(BaseModel):
     priority: Priority
     due_date: str | None
     reason: str
+
+
+class BriefingPick(BaseModel):
+    id: int
+    reason: str
+
+
+class Briefing(BaseModel):
+    # 오늘 브리핑. 돌려주기만 하고 저장하지 않는다. top3 는 먼저 할 일(최대 셋), later 는 미뤄도 되는 Task id.
+    top3: list[BriefingPick]
+    later: list[int]
+    cheer: str
+
+
+class CommandRequest(BaseModel):
+    # 값 검사는 rules.py 한 곳에서 한다. 여기서는 받기만 한다.
+    text: Any = None
+
+
+class CommandAction(BaseModel):
+    # 제안 하나. add 는 title · priority · due_date, due 는 id · due_date, done 은 id 만 쓰고 나머지는 null.
+    kind: Literal["add", "due", "done"]
+    id: int | None
+    title: str | None
+    priority: Priority | None
+    due_date: str | None
+
+
+class CommandResult(BaseModel):
+    # 제안만 돌려준다. 저장하지 않는다. 쓸 수 있는 action 이 없을 때만 ask 가 문장이다.
+    actions: list[CommandAction]
+    ask: str | None
 
 
 class Credentials(BaseModel):
