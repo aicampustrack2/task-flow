@@ -51,6 +51,16 @@ def validate_priority(priority: object) -> Priority:
         raise RuleError("우선순위는 LOW, NORMAL, HIGH 중 하나여야 합니다.") from None
 
 
+def read_priority(stored: object) -> Priority:
+    # DB 에서 읽은 값 전용이다. 저장소는 값을 제한하지 않아(D-018) 허용 밖의 값이 들어 있을 수 있다.
+    # 그런 행 하나 때문에 목록 전체가 오류가 나지 않도록 보통으로 본다. 저장된 값은 고치지 않는다.
+    # 사용자가 보낸 값은 이 함수가 아니라 validate_priority 로 거부한다.
+    try:
+        return Priority(stored)
+    except ValueError:
+        return Priority.NORMAL
+
+
 _DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
 
