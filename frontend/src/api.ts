@@ -1,4 +1,4 @@
-import type { Briefing, Status, Suggestion, Task, TaskInput, User } from './types'
+import type { Briefing, CommandResult, Status, Suggestion, Task, TaskInput, User } from './types'
 
 // 상태 코드를 담은 오류. 401(로그인 안 됨)을 연결 실패 등과 구분하는 데 쓴다.
 export class ApiError extends Error {
@@ -89,6 +89,15 @@ export function suggestTask(input: { title: string; description: string }): Prom
 // 본문 없이 요청한다. 서버가 로그인한 사용자의 끝나지 않은 Task 로 만들고, 저장하지 않는다.
 export function getBriefing(): Promise<Briefing> {
   return request<Briefing>('/tasks/briefing', { method: 'POST' })
+}
+
+// 한 문장을 보내 제안을 받는다. 서버는 저장하지 않는다. 적용은 기존 API 로 따로 한다.
+export function runCommand(text: string): Promise<CommandResult> {
+  return request<CommandResult>('/tasks/command', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ text }),
+  })
 }
 
 export function changeStatus(id: number, status: Status): Promise<Task> {

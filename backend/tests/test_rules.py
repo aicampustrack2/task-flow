@@ -2,17 +2,33 @@ import unittest
 from datetime import date
 
 from app.rules import (
+    COMMAND_MAX_LENGTH,
     Priority,
     RuleError,
     Status,
     is_overdue,
     sort_key,
+    validate_command_text,
     validate_description,
     validate_due_date,
     validate_priority,
     validate_status,
     validate_title,
 )
+
+
+class CommandTextRuleTest(unittest.TestCase):
+    def test_rejects_empty_blank_and_non_string(self):
+        for bad in ["", " ", "   \t\n", None, 3]:
+            with self.subTest(bad=bad):
+                with self.assertRaises(RuleError):
+                    validate_command_text(bad)
+
+    def test_trims_and_limits_to_200_characters(self):
+        self.assertEqual(validate_command_text("  내일 청소  "), "내일 청소")
+        self.assertEqual(len(validate_command_text("가" * COMMAND_MAX_LENGTH)), 200)
+        with self.assertRaises(RuleError):
+            validate_command_text("가" * (COMMAND_MAX_LENGTH + 1))
 
 
 class TitleRuleTest(unittest.TestCase):

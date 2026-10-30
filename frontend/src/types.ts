@@ -41,6 +41,22 @@ export interface Briefing {
   cheer: string
 }
 
+// 한 문장으로 시키기. 서버가 돌려주는 제안이고 저장된 것이 아니다.
+// add 는 title · priority · due_date, due 는 id · due_date, done 은 id 만 쓰고 나머지는 null.
+export interface CommandAction {
+  kind: 'add' | 'due' | 'done'
+  id: number | null
+  title: string | null
+  priority: Priority | null
+  due_date: string | null
+}
+
+export interface CommandResult {
+  actions: CommandAction[]
+  // 쓸 수 있는 action 이 없을 때만 문장이다.
+  ask: string | null
+}
+
 export interface User {
   id: number
   username: string

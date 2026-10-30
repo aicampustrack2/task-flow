@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.auth import router as auth_router
 from app.briefing import router as briefing_router
+from app.command import router as command_router
 from app.config import get_session_secret
 from app.db import init_db
 from app.suggest import router as suggest_router
@@ -34,6 +35,7 @@ app.include_router(auth_router)
 app.include_router(tasks_router)
 app.include_router(suggest_router)
 app.include_router(briefing_router)
+app.include_router(command_router)
 
 
 @app.get("/health")

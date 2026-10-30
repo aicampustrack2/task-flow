@@ -61,6 +61,19 @@ def read_priority(stored: object) -> Priority:
         return Priority.NORMAL
 
 
+COMMAND_MAX_LENGTH = 200
+
+
+def validate_command_text(text: object) -> str:
+    # "한 문장으로 시키기" 입력. 앞뒤 공백을 지운 뒤 1~200자여야 한다.
+    if not isinstance(text, str) or not text.strip():
+        raise RuleError("명령은 비워 둘 수 없습니다.")
+    value = text.strip()
+    if len(value) > COMMAND_MAX_LENGTH:
+        raise RuleError(f"명령은 {COMMAND_MAX_LENGTH}자 이하여야 합니다.")
+    return value
+
+
 _DATE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}")
 
 
