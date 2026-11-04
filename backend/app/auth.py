@@ -1,6 +1,5 @@
-import sqlite3
-
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from psycopg.errors import UniqueViolation
 
 from app.auth_core import (
     SESSION_TTL_SECONDS,
@@ -53,7 +52,7 @@ def current_user(request: Request) -> User:
         row = (
             None
             if user_id is None
-            else conn.execute("SELECT id, username FROM users WHERE id = ?", (user_id,)).fetchone()
+            else conn.execute("SELECT id, username FROM users WHERE id = %s", (user_id,)).fetchone()
         )
     finally:
         conn.close()
@@ -75,23 +74,23 @@ def signup(body: Credentials) -> User:
     conn = connect()
     try:
         # 저장(commit)이 끝난 뒤에만 응답한다. (D-004)
-        with conn:
+        with conn.transaction():
             row = conn.execute(
-                "SELECT id, password_hash FROM users WHERE username = ?", (username,)
+                "SELECT id, password_hash FROM users WHERE username = %s", (username,)
             ).fetchone()
             if row is None:
                 try:
                     user_id = conn.execute(
-                        "INSERT INTO users (username, password_hash) VALUES (?, ?)",
+                        "INSERT INTO users (username, password_hash) VALUES (%s, %s) RETURNING id",
                         (username, password_hash),
-                    ).lastrowid
-                except sqlite3.IntegrityError:
+                    ).fetchone()["id"]
+                except UniqueViolation:
                     raise taken from None
             elif row["password_hash"] is None:
                 # 이전용 계정이 처음 가입으로 비밀번호를 정해 계정과 기존 Task를 받는다. (D-024)
                 # 비밀번호 설정은 아직 비어 있을 때만 한 번 통한다.
                 cur = conn.execute(
-                    "UPDATE users SET password_hash = ? WHERE id = ? AND password_hash IS NULL",
+                    "UPDATE users SET password_hash = %s WHERE id = %s AND password_hash IS NULL",
                     (password_hash, row["id"]),
                 )
                 if cur.rowcount != 1:
@@ -99,7 +98,7 @@ def signup(body: Credentials) -> User:
                 user_id = row["id"]
             else:
                 raise taken
-        saved = conn.execute("SELECT id, username FROM users WHERE id = ?", (user_id,)).fetchone()
+        saved = conn.execute("SELECT id, username FROM users WHERE id = %s", (user_id,)).fetchone()
     finally:
         conn.close()
     return _to_user(saved)
@@ -116,7 +115,7 @@ def login(body: Credentials, response: Response) -> User:
     conn = connect()
     try:
         row = conn.execute(
-            "SELECT id, username, password_hash FROM users WHERE username = ?", (username,)
+            "SELECT id, username, password_hash FROM users WHERE username = %s", (username,)
         ).fetchone()
         ok = verify_password(body.password, row["password_hash"] if row else _get_dummy_hash())
         if row is None or not ok:

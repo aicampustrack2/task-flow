@@ -41,7 +41,7 @@ def list_tasks(user: User = Depends(current_user)) -> list[Task]:
     # 읽기에 실패하면 예외가 그대로 오류 응답이 된다. 빈 목록으로 응답하지 않는다.
     conn = connect()
     try:
-        rows = conn.execute("SELECT * FROM tasks WHERE owner_id = ?", (user.id,)).fetchall()
+        rows = conn.execute("SELECT * FROM tasks WHERE owner_id = %s", (user.id,)).fetchall()
     finally:
         conn.close()
     # 서버가 정렬해서 준다. 기한 초과 → 우선순위 → 마감일 → 만든 순서. (R-012)
@@ -66,13 +66,13 @@ def create_task(body: TaskCreate, user: User = Depends(current_user)) -> Task:
     # 저장(commit)이 끝난 뒤에만 응답한다. (D-004) 새 카드의 처음 상태는 TODO.
     conn = connect()
     try:
-        with conn:
-            cur = conn.execute(
+        with conn.transaction():
+            new_id = conn.execute(
                 "INSERT INTO tasks (title, description, status, owner_id, priority, due_date)"
-                " VALUES (?, ?, ?, ?, ?, ?)",
+                " VALUES (%s, %s, %s, %s, %s, %s) RETURNING id",
                 (title, description, Status.TODO.value, user.id, priority.value, due_date),
-            )
-        row = conn.execute("SELECT * FROM tasks WHERE id = ?", (cur.lastrowid,)).fetchone()
+            ).fetchone()["id"]
+        row = conn.execute("SELECT * FROM tasks WHERE id = %s", (new_id,)).fetchone()
     finally:
         conn.close()
     return _to_task(row)
@@ -81,7 +81,7 @@ def create_task(body: TaskCreate, user: User = Depends(current_user)) -> Task:
 def _get_or_404(conn, task_id: int, owner_id: int):
     # 소유자 확인은 조회 조건에서 한다. 남의 Task와 없는 Task는 같은 404이다.
     row = conn.execute(
-        "SELECT * FROM tasks WHERE id = ? AND owner_id = ?", (task_id, owner_id)
+        "SELECT * FROM tasks WHERE id = %s AND owner_id = %s", (task_id, owner_id)
     ).fetchone()
     if row is None:
         raise HTTPException(status_code=404, detail="카드를 찾을 수 없습니다.")
@@ -108,10 +108,10 @@ def update_task(task_id: int, body: TaskUpdate, user: User = Depends(current_use
                 due_date = validate_due_date(body.due_date)
         except RuleError as e:
             raise HTTPException(status_code=422, detail=str(e)) from None
-        with conn:
+        with conn.transaction():
             conn.execute(
-                "UPDATE tasks SET title = ?, description = ?, priority = ?, due_date = ?"
-                " WHERE id = ? AND owner_id = ?",
+                "UPDATE tasks SET title = %s, description = %s, priority = %s, due_date = %s"
+                " WHERE id = %s AND owner_id = %s",
                 (title, description, priority, due_date, task_id, user.id),
             )
         row = _get_or_404(conn, task_id, user.id)
@@ -132,9 +132,9 @@ def change_status(
             status = validate_status(body.status)
         except RuleError as e:
             raise HTTPException(status_code=422, detail=str(e)) from None
-        with conn:
+        with conn.transaction():
             conn.execute(
-                "UPDATE tasks SET status = ? WHERE id = ? AND owner_id = ?",
+                "UPDATE tasks SET status = %s WHERE id = %s AND owner_id = %s",
                 (status.value, task_id, user.id),
             )
         row = _get_or_404(conn, task_id, user.id)
@@ -148,9 +148,9 @@ def delete_task(task_id: int, user: User = Depends(current_user)) -> None:
     conn = connect()
     try:
         _get_or_404(conn, task_id, user.id)
-        with conn:
+        with conn.transaction():
             conn.execute(
-                "DELETE FROM tasks WHERE id = ? AND owner_id = ?", (task_id, user.id)
+                "DELETE FROM tasks WHERE id = %s AND owner_id = %s", (task_id, user.id)
             )
     finally:
         conn.close()

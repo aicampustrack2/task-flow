@@ -32,6 +32,19 @@ def get_anthropic_api_key(env_path: Path | None = None) -> str | None:
     return value.strip() or None
 
 
+def get_database_url(env_path: Path | None = None) -> str:
+    # 환경변수가 우선이고, 없으면 backend/.env 를 본다. 비어 있으면 시작을 거부한다. 값은 출력하지 않는다.
+    value = os.environ.get("DATABASE_URL") or _read_env_file(env_path or ENV_PATH).get(
+        "DATABASE_URL", ""
+    )
+    value = value.strip()
+    if not value:
+        raise ConfigError(
+            "DATABASE_URL 이 비어 있습니다. backend/.env 에 값을 넣어야 API를 시작합니다."
+        )
+    return value
+
+
 def get_session_secret(env_path: Path | None = None) -> str:
     # 환경변수가 우선이고, 없으면 backend/.env 를 본다. 비어 있으면 시작을 거부한다.
     value = os.environ.get("SESSION_SECRET") or _read_env_file(env_path or ENV_PATH).get(

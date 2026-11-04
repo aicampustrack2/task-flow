@@ -2,8 +2,9 @@ import base64
 import hashlib
 import hmac
 import secrets
-import sqlite3
 import time
+
+import psycopg
 
 # 로그인 유지 시간은 30분이고 마지막 로그인부터 센다. 요청마다 연장하지 않는다. (D-025)
 SESSION_TTL_SECONDS = 30 * 60
@@ -41,34 +42,34 @@ def verify_password(password: str, stored: str | None) -> bool:
     return hmac.compare_digest(actual, expected)
 
 
-def create_session(conn: sqlite3.Connection, user_id: int, now: int | None = None) -> str:
+def create_session(conn: psycopg.Connection, user_id: int, now: int | None = None) -> str:
     now = int(time.time()) if now is None else now
     session_id = secrets.token_urlsafe(32)
-    with conn:
+    with conn.transaction():
         # 만료된 세션은 로그인할 때 지운다.
-        conn.execute("DELETE FROM sessions WHERE expires_at <= ?", (now,))
+        conn.execute("DELETE FROM sessions WHERE expires_at <= %s", (now,))
         conn.execute(
-            "INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)",
+            "INSERT INTO sessions (id, user_id, expires_at) VALUES (%s, %s, %s)",
             (session_id, user_id, now + SESSION_TTL_SECONDS),
         )
     return session_id
 
 
 def get_session_user_id(
-    conn: sqlite3.Connection, session_id: str, now: int | None = None
+    conn: psycopg.Connection, session_id: str, now: int | None = None
 ) -> int | None:
     now = int(time.time()) if now is None else now
     row = conn.execute(
-        "SELECT user_id, expires_at FROM sessions WHERE id = ?", (session_id,)
+        "SELECT user_id, expires_at FROM sessions WHERE id = %s", (session_id,)
     ).fetchone()
     if row is None or row["expires_at"] <= now:
         return None
     return row["user_id"]
 
 
-def delete_session(conn: sqlite3.Connection, session_id: str) -> None:
-    with conn:
-        conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+def delete_session(conn: psycopg.Connection, session_id: str) -> None:
+    with conn.transaction():
+        conn.execute("DELETE FROM sessions WHERE id = %s", (session_id,))
 
 
 def _sign(session_id: str, secret: str) -> str:

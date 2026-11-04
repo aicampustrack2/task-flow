@@ -38,7 +38,7 @@ def _load_tasks(user_id: int) -> list[dict]:
     try:
         rows = conn.execute(
             "SELECT id, title, priority, due_date, status FROM tasks"
-            " WHERE owner_id = ? AND status != ?",
+            " WHERE owner_id = %s AND status != %s",
             (user_id, Status.DONE.value),
         ).fetchall()
     finally:
